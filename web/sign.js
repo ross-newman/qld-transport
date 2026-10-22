@@ -121,6 +121,23 @@ function renderRoute(r) {
     return div;
   }));
   layoutStops(stops, r.stops);
+  layoutLogo(body, stops, r);
+}
+
+const ROUTE_BODY_HEIGHT = 790;
+const ROUTE_ROW_HEIGHT = 115;   // service row including its border
+const LOGO_MAX_HEIGHT = 300;    // a bit under one third of the 1080px screen
+const LOGO_MIN_HEIGHT = 120;
+const LOGO_MARGIN = 12;         // gap above the logo, below the stops
+const LOGO_BOTTOM = 60;         // gap under the logo (keep in step with the CSS)
+
+// Airtrain logo for services to the Airport, as large as the space below the stops allows.
+function layoutLogo(body, stops, r) {
+  const logo = body.querySelector(".airtrain-logo");
+  const space = ROUTE_BODY_HEIGHT - ROUTE_ROW_HEIGHT - stops.offsetHeight - LOGO_MARGIN - LOGO_BOTTOM;
+  const height = Math.min(LOGO_MAX_HEIGHT, space);
+  logo.hidden = !r.destination.endsWith("Airport") || height < LOGO_MIN_HEIGHT;
+  if (!logo.hidden) logo.style.height = `${height}px`;
 }
 
 const STOPS_WIDTH = 1832;   // usable width of the stops block in the 1920px canvas

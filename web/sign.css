@@ -224,7 +224,14 @@ section {
 
 /* Platform view, second page: the next train's calling pattern on its line colour. */
 #route { height: 802px; }
-#route .route-body { height: 790px; }
+#route .route-body { position: relative; height: 790px; }
+/* Airtrain logo in the space left below the stops of a service to the Airport (sized by sign.js). */
+#route .airtrain-logo {
+  position: absolute;
+  left: 50%;
+  bottom: 60px;
+  transform: translateX(-50%);
+}
 #route .route-row {
   position: relative;
   height: 112px;
