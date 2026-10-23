@@ -5,6 +5,30 @@ html, body {
   overflow: hidden;
 }
 
+/* Station / stop name across the top of the page, above the scaled sign (sign.js leaves room). */
+#banner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 7vh;
+  box-sizing: border-box;
+  padding: 0 2vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1b1b1b;
+  border-bottom: 2px solid #f2e53a;
+  color: #fff;
+  font-family: "Nimbus Sans", "Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif;
+  font-weight: 700;
+  font-size: 4vh;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 20;
+}
+
 /* Fixed 1920x1080 design canvas, scaled to the window by sign.js. */
 #stage {
   position: absolute;
@@ -59,7 +83,7 @@ header {
 
 #pickers {
   position: absolute;
-  right: 0;
+  right: 5px;  /* distance from the right edge of the sign: raise it to move the pickers left */
   top: 14px;
   z-index: 10;
   display: flex;
@@ -101,6 +125,7 @@ header {
 
 #station-input {
   width: 220px;
+  transition: width 0.2s;
   box-sizing: border-box;
   padding: 6px 12px;
   font: inherit;
@@ -114,12 +139,16 @@ header {
 
 #station-input:focus { outline: none; border-color: #f2e53a; }
 
+/* The box grows to the left while typing, so long stop names are not cut off. */
+#station-picker:focus-within #station-input { width: 460px; }
+
 #station-menu,
 #platform-menu {
   position: absolute;
   right: 0;
   top: 100%;
-  width: 340px;
+  width: 100%;
+  min-width: 460px;
   max-height: 600px;
   overflow-y: auto;
   box-sizing: border-box;
@@ -139,6 +168,29 @@ header {
 
 #station-menu li,
 #platform-menu li { padding: 6px 12px; cursor: pointer; }
+
+/* Picker rows: [Train|Bus tag] name ... stop code. Spacing is explicit margins, not whitespace. */
+#station-menu li { display: flex; align-items: center; }
+#station-menu .tag {
+  flex: none;
+  margin-right: 14px;
+  padding: 0 10px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 30px;
+  border-radius: 4px;
+  background: #555;
+}
+#station-menu .tag.bus { background: #007c89; }  /* BUS_COLOR in backend/departures.py */
+#station-menu .label { flex: 1; min-width: 0; }
+#station-menu .code {
+  flex: none;
+  margin-left: 14px;
+  font-size: 22px;
+  font-weight: 400;
+  color: #aaa;
+  white-space: nowrap;
+}
 #station-menu li.active,
 #station-menu li:hover,
 #platform-menu li.active,
@@ -187,6 +239,31 @@ section {
 .row .exp { position: absolute; left: 1180px; }
 .row .platform { position: absolute; left: 1350px; width: 250px; text-align: center; font-size: 84px; }
 .row .minutes { position: absolute; right: 12px; }
+
+/* Bus rows: the route number sits in a white badge (text in the row colour) before the
+   destination, which is clipped rather than allowed to run into the Stop column. */
+.row .route {
+  position: absolute;
+  left: 230px;
+  top: 16px;
+  width: 200px;
+  height: 80px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--row);
+  font-size: 62px;
+  line-height: 80px;
+  text-align: center;
+  overflow: hidden;
+}
+.row.bus .platform { font-size: 56px; }  /* stop codes are up to six digits */
+.row.bus .dest {
+  left: 460px;
+  width: 860px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .airport-icon {
   display: inline-block;
   width: 92px;

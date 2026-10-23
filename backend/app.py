@@ -1,4 +1,4 @@
-"""FastAPI app: serves the station sign page and its JSON departures API."""
+"""FastAPI app: serves the station/bus stop sign page and its JSON departures API."""
 from __future__ import annotations
 
 import logging
@@ -21,8 +21,8 @@ WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 
 rt_cache = RealtimeCache()
 state: dict = {"index": None, "default_station": None}
-# Set by `python -m backend --station NAME --show-attribution`.
-settings: dict = {"show_attribution": False, "station": "Northgate"}
+# Set by `python -m backend --stop NAME --mode MODE --show-attribution`.
+settings: dict = {"show_attribution": False, "station": "Northgate", "mode": None}
 stop_event = threading.Event()
 
 
@@ -44,11 +44,12 @@ def _poll_loop() -> None:
 async def lifespan(_: FastAPI):
     log.info("Loading static GTFS index (first run downloads and indexes ~35 MB)...")
     state["index"] = gtfs_static.load_index()
-    default = state["index"].find_station(settings["station"])
+    default = state["index"].find_place(settings["station"], settings["mode"])
     if default is None:
-        hint = ", ".join(state["index"].suggest_stations(settings["station"]))
+        hint = ", ".join(state["index"].suggest_places(settings["station"]))
         raise RuntimeError(
-            f"Unknown station {settings['station']!r}" + (f" - did you mean: {hint}?" if hint else "")
+            f"Unknown station or stop {settings['station']!r}"
+            + (f" - did you mean: {hint}?" if hint else "")
         )
     state["default_station"] = default
     thread = threading.Thread(target=_poll_loop, daemon=True)
@@ -72,13 +73,43 @@ def stations() -> dict:
     }
 
 
-@app.get("/api/departures")
-def departures(station: str | None = None, platform: str | None = None) -> dict:
+@app.get("/api/stops")
+def stops(q: str = "", mode: str | None = None, limit: int = 20) -> dict:
+    """Search train stations and bus stops by name, stop code or id (for the picker).
+
+    With no query, lists train stations alphabetically. `mode` is "train" or "bus".
+    """
     index = state["index"]
-    station_id = index.find_station(station) if station else state["default_station"]
-    if station_id is None:
-        raise HTTPException(status_code=404, detail=f"Unknown station: {station}")
-    board = build_board(index, rt_cache, station_id, platform=platform)
+    if mode not in (None, "train", "bus"):
+        raise HTTPException(status_code=400, detail="mode must be 'train' or 'bus'")
+    places = index.search_places(q, mode, max(1, min(limit, 500)))
+    return {
+        "stops": [
+            {
+                "id": p.id,
+                "name": p.name,
+                "code": p.code,
+                "mode": p.mode,
+                "lat": p.lat,
+                "lon": p.lon,
+            }
+            for p in places
+        ]
+    }
+
+
+@app.get("/api/departures")
+def departures(stop: str | None = None, station: str | None = None, mode: str | None = None,
+platform: str | None = None) -> dict:
+    """Departure board. `stop` (id, bus stop code or name) wins over the older `station`."""
+    index = state["index"]
+    if mode not in (None, "train", "bus"):
+        raise HTTPException(status_code=400, detail="mode must be 'train' or 'bus'")
+    query = stop or station
+    place_id = index.find_place(query, mode) if query else state["default_station"]
+    if place_id is None:
+        raise HTTPException(status_code=404, detail=f"Unknown station or stop: {query}")
+    board = build_board(index, rt_cache, place_id, mode=mode, platform=platform)
     board["show_attribution"] = settings["show_attribution"]
     return board
 

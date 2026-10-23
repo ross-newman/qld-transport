@@ -1,5 +1,5 @@
-"""Entry point: python -m backend [--station NAME] [--port N] [--host H] [--show-attribution]
-[--no-infer-ngr]"""
+"""Entry point: python -m backend [--stop NAME] [--mode train|bus] [--port N] [--host H]
+[--show-attribution] [--no-infer-ngr]"""
 import argparse
 import socket
 import sys
@@ -17,8 +17,17 @@ def _port_in_use(host: str, port: int) -> bool:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Queensland Rail station sign server")
-    parser.add_argument("--station", default="Northgate", help="station shown by default (name or id)")
+    parser = argparse.ArgumentParser(description="Queensland rail station / bus stop sign server")
+    parser.add_argument("--station", default="Northgate", help="station or stop shown by default (name or id)")
+    parser.add_argument(
+        "--stop",
+        help="stop shown by default: a station or bus stop name, bus stop code or id (overrides --station)",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=("train", "bus"),
+        help="only look for the default stop among trains or buses (default: either, preferring trains)",
+    )
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8731)
     parser.add_argument(
@@ -39,7 +48,8 @@ def main() -> None:
             f"Port {args.port} is already in use (is the sign already running?). "
             f"Stop it, or pick another port with --port N."
         )
-    app_module.settings["station"] = args.station
+    app_module.settings["station"] = args.stop or args.station
+    app_module.settings["mode"] = args.mode
     app_module.settings["show_attribution"] = args.show_attribution
     stock.USE_RUN_CODE_RULE = args.infer_ngr
     uvicorn.run(app_module.app, host=args.host, port=args.port)

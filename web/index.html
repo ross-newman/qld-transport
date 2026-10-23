@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Station sign</title>
+  <title>Station / bus stop sign</title>
   <link rel="stylesheet" href="sign.css">
 </head>
 <body>
+  <div id="banner" aria-live="polite"></div>
   <div id="stage">
     <header>
       <div id="clock">--:--:--</div>
@@ -14,8 +15,8 @@
       <div id="route-departs" hidden>Departs</div>
       <div id="pickers">
         <div id="station-picker">
-          <input id="station-input" placeholder="Search station" role="combobox"
-                 aria-controls="station-menu" autocomplete="off" spellcheck="false" aria-label="Station">
+          <input id="station-input" placeholder="Search station or bus stop" role="combobox"
+                 aria-controls="station-menu" autocomplete="off" spellcheck="false" aria-label="Station or bus stop">
           <ul id="station-menu" role="listbox" hidden></ul>
         </div>
         <div id="platform-picker" hidden>
